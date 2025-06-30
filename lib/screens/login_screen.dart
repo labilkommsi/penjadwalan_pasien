@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:penjadwalan_pasien/screens/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,7 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final String email = _emailController.text;
     final String password = _passwordController.text;
 
-    // Validasi sederhana, pastikan tidak kosong
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Email dan Password tidak boleh kosong!')),
@@ -28,44 +28,46 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Alamat URL API login Anda
-    final url = Uri.parse('http://alamat-server-anda/api/login.php');
+    // --- GANTI ALAMAT IP DI BAWAH INI ---
+    // Gunakan alamat IP dari komputer Anda, bukan localhost
+    final url = Uri.parse('http://10.1.15.25/api_pasien_cerdas/login.php');
+    // Contoh: 'http://192.168.1.7/api_pasien_cerdas/login.php'
 
     try {
-      final response = await http.post(
-        url,
-        body: {
-          'email': email,
-          'password': password,
-        },
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) => const Center(child: CircularProgressIndicator()),
       );
 
-      // Jika server merespon dengan sukses (kode 200)
+      final response = await http.post(url, body: {'email': email, 'password': password})
+          .timeout(const Duration(seconds: 10));
+
+      Navigator.of(context).pop(); // Hapus dialog loading
+
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-
         if (responseData['status'] == 'success') {
-          // Jika login berhasil, pindah ke HomeScreen
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isLoggedIn', true);
+          await prefs.setInt('user_id', responseData['user_id']); // <-- TAMBAHKAN BARIS INI
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const HomeScreen()),
           );
         } else {
-          // Jika login gagal (data salah)
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Login Gagal: ${responseData['message']}')),
           );
         }
       } else {
-        // Jika server error (bukan 200)
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Terjadi kesalahan pada server.')),
+          const SnackBar(content: Text('Gagal terhubung ke server.')),
         );
       }
     } catch (e) {
-      // Jika tidak ada koneksi internet atau masalah jaringan lainnya
-      print(e.toString());
+      Navigator.of(context).pop(); // Hapus dialog loading
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.')),
+        SnackBar(content: Text('Terjadi kesalahan jaringan: ${e.toString()}')),
       );
     }
   }

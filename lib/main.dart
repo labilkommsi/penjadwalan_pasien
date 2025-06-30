@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:penjadwalan_pasien/screens/login_screen.dart'; // Import file login screen
+import 'package:penjadwalan_pasien/screens/splash_screen.dart'; // Import splash screen
 
 void main() {
   runApp(const MyApp());
@@ -13,11 +13,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Penjadwalan Pasien',
       theme: ThemeData(
-        primarySwatch: Colors.teal, // Atur warna tema utama aplikasi
+        primarySwatch: Colors.teal,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      debugShowCheckedModeBanner: false, // Menghilangkan banner debug
-      home: const LoginScreen(), // Halaman pertama yang dibuka adalah LoginScreen
+      debugShowCheckedModeBanner: false,
+      // Jadikan SplashScreen sebagai halaman pertama
+      home: const SplashScreen(),
     );
   }
 }
